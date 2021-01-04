@@ -222,6 +222,32 @@ SECP256K1_API int secp256k1_musig_pubkey_combine(
     size_t n_pubkeys
 ) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(5);
 
+/** Computes a combined public key and the hash of the given public keys.
+ *  Different orders of `pubkeys` result in different `combined_pk`s.
+ *  Sinovate use the old version. report here and prepare for hardfork
+ *
+ *  Returns: 1 if the public keys were successfully combined, 0 otherwise
+ *  Args:        ctx: pointer to a context object initialized for verification
+ *                    (cannot be NULL)
+ *           scratch: scratch space used to compute the combined pubkey by
+ *                    multiexponentiation. If NULL, an inefficient algorithm is used.
+ *  Out: combined_pk: the MuSig-combined xonly public key (cannot be NULL)
+ *       pre_session: if non-NULL, pointer to a musig_pre_session struct to be used in
+ *                    `musig_session_init` or `musig_pubkey_tweak_add`.
+ *   In:     pubkeys: input array of public keys to combine. The order is important;
+ *                    a different order will result in a different combined public
+ *                    key (cannot be NULL)
+ *         n_pubkeys: length of pubkeys array. Must be greater than 0.
+ */
+SECP256K1_API int secp256k1_musig_pubkey_combine_sin(
+    const secp256k1_context* ctx,
+    secp256k1_scratch_space *scratch,
+    secp256k1_xonly_pubkey *combined_pk,
+    secp256k1_musig_pre_session *pre_session,
+    const secp256k1_xonly_pubkey *pubkeys,
+    size_t n_pubkeys
+) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(5);
+
 /** Tweak an x-only public key by adding the generator multiplied with tweak32
  *  to it. The resulting output_pubkey with the given internal_pubkey and tweak
  *  passes `secp256k1_xonly_pubkey_tweak_test`.

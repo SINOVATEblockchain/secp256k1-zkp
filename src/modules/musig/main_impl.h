@@ -186,6 +186,39 @@ int secp256k1_musig_pubkey_combine(const secp256k1_context* ctx, secp256k1_scrat
     return 1;
 }
 
+int secp256k1_musig_pubkey_combine_sin(const secp256k1_context* ctx, secp256k1_scratch_space *scratch, secp256k1_xonly_pubkey *combined_pk, secp256k1_musig_pre_session *pre_session, const secp256k1_xonly_pubkey *pubkeys, size_t n_pubkeys) {
+    secp256k1_musig_pubkey_combine_ecmult_data ecmult_data;
+    secp256k1_gej pkj;
+    secp256k1_ge pkp;
+
+    VERIFY_CHECK(ctx != NULL);
+    ARG_CHECK(combined_pk != NULL);
+    ARG_CHECK(secp256k1_ecmult_context_is_built(&ctx->ecmult_ctx));
+    ARG_CHECK(pubkeys != NULL);
+    ARG_CHECK(n_pubkeys > 0);
+
+    ecmult_data.ctx = ctx;
+    ecmult_data.pks = pubkeys;
+    if (!secp256k1_musig_compute_ell(ctx, ecmult_data.ell, pubkeys, n_pubkeys)) {
+        return 0;
+    }
+    if (!secp256k1_ecmult_multi_var(&ctx->error_callback, &ctx->ecmult_ctx, scratch, &pkj, NULL, secp256k1_musig_pubkey_combine_callback, (void *) &ecmult_data, n_pubkeys)) {
+        return 0;
+    }
+    secp256k1_ge_set_gej(&pkp, &pkj);
+    /*secp256k1_fe_normalize(&pkp.y);
+    pk_parity = secp256k1_extrakeys_ge_even_y(&pkp);*/
+    secp256k1_xonly_pubkey_save(combined_pk, &pkp);
+
+    if (pre_session != NULL) {
+        pre_session->magic = pre_session_magic;
+        memcpy(pre_session->pk_hash, ecmult_data.ell, 32);
+        pre_session->pk_parity = 0;
+        pre_session->is_tweaked = 0;
+    }
+    return 1;
+}
+
 int secp256k1_musig_pubkey_tweak_add(const secp256k1_context* ctx, secp256k1_musig_pre_session *pre_session, secp256k1_pubkey *output_pubkey, const secp256k1_xonly_pubkey *internal_pubkey, const unsigned char *tweak32) {
     secp256k1_ge pk;
 
