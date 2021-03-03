@@ -1,0 +1,16 @@
+include_HEADERS += include/secp256k1_musigpk.h
+noinst_HEADERS += src/modules/musigpk/main_impl.h
+noinst_HEADERS += src/modules/musigpk/tests_impl.h
+
+noinst_PROGRAMS += example_musigpk
+example_musigpk_SOURCES = src/modules/musigpk/example.c
+example_musigpk_CPPFLAGS = -DSECP256K1_BUILD -I$(top_srcdir)/include $(SECP_INCLUDES)
+if !ENABLE_COVERAGE
+example_musigpk_CPPFLAGS += -DVERIFY
+endif
+example_musigpk_LDADD = libsecp256k1.la $(SECP_LIBS)
+example_musigpk_LDFLAGS = -static
+
+if USE_TESTS
+TESTS += example_musigpk
+endif
