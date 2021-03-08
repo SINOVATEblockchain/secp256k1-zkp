@@ -107,9 +107,9 @@ AC_ARG_ENABLE(openssl_tests,
     [enable_openssl_tests=auto])
 
 AC_ARG_ENABLE(experimental,
-    AS_HELP_STRING([--enable-experimental],[allow experimental configure options [default=no]]),
+    AS_HELP_STRING([--enable-experimental],[allow experimental configure options [default=yes]]),
     [use_experimental=$enableval],
-    [use_experimental=no])
+    [use_experimental=yes])
 
 AC_ARG_ENABLE(exhaustive_tests,
     AS_HELP_STRING([--enable-exhaustive-tests],[compile exhaustive tests [default=yes]]),
@@ -124,12 +124,22 @@ AC_ARG_ENABLE(ecmult_static_precomputation,
 AC_ARG_ENABLE(module_ecdh,
     AS_HELP_STRING([--enable-module-ecdh],[enable ECDH shared secret computation]),
     [enable_module_ecdh=$enableval],
-    [enable_module_ecdh=no])
+    [enable_module_ecdh=yes])
 
 AC_ARG_ENABLE(module_musig,
     AS_HELP_STRING([--enable-module-musig],[enable MuSig module (experimental)]),
     [enable_module_musig=$enableval],
     [enable_module_musig=no])
+
+AC_ARG_ENABLE(module_schnorrpk,
+    AS_HELP_STRING([--enable-module-schnorrpk],[enable schnorr module (experimental)]),
+    [enable_module_schnorrpk=$enableval],
+    [enable_module_schnorrpk=yes])
+
+AC_ARG_ENABLE(module_musigpk,
+    AS_HELP_STRING([--enable-module-musigpk],[enable MuSigPk module (experimental)]),
+    [enable_module_musigpk=$enableval],
+    [enable_module_musigpk=yes])
 
 AC_ARG_ENABLE(module_recovery,
     AS_HELP_STRING([--enable-module-recovery],[enable ECDSA pubkey recovery module [default=no]]),
@@ -508,6 +518,14 @@ if test x"$enable_module_schnorrsig" = x"yes"; then
   enable_module_extrakeys=yes
 fi
 
+if test x"$enable_module_schnorrpk" = x"yes"; then
+  AC_DEFINE(ENABLE_MODULE_SCHNORRPK, 1, [Define this symbol to enable the schnorr module])
+fi
+
+if test x"$enable_module_musigpk" = x"yes"; then
+  AC_DEFINE(ENABLE_MODULE_MUSIGPK, 1, [Define this symbol to enable the MuSigPk module])
+fi
+
 # Test if extrakeys is set after the schnorrsig module to allow the schnorrsig
 # module to set enable_module_extrakeys=yes
 if test x"$enable_module_extrakeys" = x"yes"; then
@@ -541,6 +559,8 @@ if test x"$enable_experimental" = x"yes"; then
   AC_MSG_NOTICE([Building MuSig module: $enable_module_musig])
   AC_MSG_NOTICE([Building extrakeys module: $enable_module_extrakeys])
   AC_MSG_NOTICE([Building schnorrsig module: $enable_module_schnorrsig])
+  AC_MSG_NOTICE([Building schnorrpk module: $enable_module_schnorrpk])
+  AC_MSG_NOTICE([Building MuSigPk module: $enable_module_musigpk])
   AC_MSG_NOTICE([Building ECDSA sign-to-contract module: $enable_module_ecdsa_s2c])
   AC_MSG_NOTICE([******])
 
@@ -548,6 +568,12 @@ if test x"$enable_experimental" = x"yes"; then
   if test x"$enable_module_schnorrsig" != x"yes"; then
     if test x"$enable_module_musig" = x"yes"; then
       AC_MSG_ERROR([MuSig module requires the schnorrsig module. Use --enable-module-schnorrsig to allow.])
+    fi
+  fi
+
+  if test x"$enable_module_schnorrpk" != x"yes"; then
+    if test x"$enable_module_musigpk" = x"yes"; then
+      AC_MSG_ERROR([MuSigPk module requires the schnorr module. Use --enable-module-schnorrpk to allow.])
     fi
   fi
 
@@ -569,8 +595,14 @@ else
   if test x"$enable_module_musig" = x"yes"; then
     AC_MSG_ERROR([MuSig module is experimental. Use --enable-experimental to allow.])
   fi
+  if test x"$enable_module_musigpk" = x"yes"; then
+    AC_MSG_ERROR([MuSigPk module is experimental. Use --enable-experimental to allow.])
+  fi
   if test x"$enable_module_extrakeys" = x"yes"; then
     AC_MSG_ERROR([extrakeys module is experimental. Use --enable-experimental to allow.])
+  fi
+  if test x"$enable_module_schnorrpk" = x"yes"; then
+    AC_MSG_ERROR([schnorr module is experimental. Use --enable-experimental to allow.])
   fi
   if test x"$enable_module_schnorrsig" = x"yes"; then
     AC_MSG_ERROR([schnorrsig module is experimental. Use --enable-experimental to allow.])
@@ -614,6 +646,8 @@ AM_CONDITIONAL([ENABLE_MODULE_RANGEPROOF], [test x"$enable_module_rangeproof" = 
 AM_CONDITIONAL([ENABLE_MODULE_WHITELIST], [test x"$enable_module_whitelist" = x"yes"])
 AM_CONDITIONAL([ENABLE_MODULE_EXTRAKEYS], [test x"$enable_module_extrakeys" = x"yes"])
 AM_CONDITIONAL([ENABLE_MODULE_SCHNORRSIG], [test x"$enable_module_schnorrsig" = x"yes"])
+AM_CONDITIONAL([ENABLE_MODULE_SCHNORRPK], [test x"$enable_module_schnorrpk" = x"yes"])
+AM_CONDITIONAL([ENABLE_MODULE_MUSIGPK], [test x"$enable_module_musigpk" = x"yes"])
 AM_CONDITIONAL([ENABLE_MODULE_ECDSA_S2C], [test x"$enable_module_ecdsa_s2c" = x"yes"])
 AM_CONDITIONAL([USE_EXTERNAL_ASM], [test x"$use_external_asm" = x"yes"])
 AM_CONDITIONAL([USE_ASM_ARM], [test x"$set_asm" = x"arm"])
@@ -639,6 +673,8 @@ echo "  module ecdh             = $enable_module_ecdh"
 echo "  module recovery         = $enable_module_recovery"
 echo "  module extrakeys        = $enable_module_extrakeys"
 echo "  module schnorrsig       = $enable_module_schnorrsig"
+echo "  module schnorrpk        = $enable_module_schnorrpk"
+echo "  module musigpk          = $enable_module_musigpk"
 echo "  module ecdsa-s2c        = $enable_module_ecdsa_s2c"
 echo
 echo "  asm                     = $set_asm"
